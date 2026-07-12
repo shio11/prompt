@@ -170,3 +170,26 @@ class NumberingInputService:
     def prompt(self, parent: tk.Misc, total_pages: int) -> Optional[NumberingConfig]:
         dialog = _NumberingInputDialog(parent, total_pages)
         return dialog.result_config
+
+
+class OutputFileNameInputService:
+    """出力するPDFのファイル名を入力させるポップアップの呼び出し窓口"""
+
+    _DEFAULT_FILE_NAME: str = "aggregated.pdf"
+
+    def prompt(self, parent: tk.Misc) -> Optional[str]:
+        file_name = simpledialog.askstring(
+            "出力ファイル名",
+            "出力するPDFのファイル名を入力してください",
+            initialvalue=self._DEFAULT_FILE_NAME,
+            parent=parent,
+        )
+        if file_name is None:
+            return None
+
+        file_name = file_name.strip()
+        if not file_name:
+            return None
+        if not file_name.lower().endswith(".pdf"):
+            file_name += ".pdf"
+        return file_name

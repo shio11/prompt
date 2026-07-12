@@ -3,13 +3,12 @@ from tkinter import messagebox
 from services import (
     FolderDialogService,
     NumberingInputService,
+    OutputFileNameInputService,
     PageNumberingService,
     PdfFileRepository,
     PdfFileSorterService,
     PdfMergerService,
 )
-
-_OUTPUT_FILE_NAME = "aggregated.pdf"
 
 
 def main() -> None:
@@ -19,6 +18,7 @@ def main() -> None:
     merger_service = PdfMergerService()
     numbering_service = PageNumberingService()
     numbering_input_service = NumberingInputService()
+    output_file_name_input_service = OutputFileNameInputService()
 
     input_folder = dialog_service.select_input_folder()
     if input_folder is None:
@@ -54,7 +54,13 @@ def main() -> None:
         dialog_service.close()
         return
 
-    output_path = output_folder / _OUTPUT_FILE_NAME
+    output_file_name = output_file_name_input_service.prompt(dialog_service.root)
+    if output_file_name is None:
+        messagebox.showwarning("キャンセル", "出力ファイル名が入力されませんでした")
+        dialog_service.close()
+        return
+
+    output_path = output_folder / output_file_name
     file_repository.save(writer, output_path)
     messagebox.showinfo("完了", f"PDFを出力しました: {output_path}")
     dialog_service.close()
