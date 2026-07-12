@@ -1,11 +1,13 @@
 from tkinter import messagebox
 
-from repositories.pdf_file_repository import PdfFileRepository
-from services.folder_dialog_service import FolderDialogService
-from services.numbering_input_service import NumberingInputService
-from services.page_numbering_service import PageNumberingService
-from services.pdf_file_sorter_service import PdfFileSorterService
-from services.pdf_merger_service import PdfMergerService
+from services import (
+    FolderDialogService,
+    NumberingInputService,
+    PageNumberingService,
+    PdfFileRepository,
+    PdfFileSorterService,
+    PdfMergerService,
+)
 
 _OUTPUT_FILE_NAME = "aggregated.pdf"
 
