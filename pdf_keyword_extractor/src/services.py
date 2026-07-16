@@ -68,9 +68,15 @@ class KeywordSearchService:
 
 
 class ExcelExportService:
-    """キーワード抽出結果をExcelファイルへ出力する責務を持つ"""
+    """キーワード抽出結果をExcelファイルへ出力する責務を持つ
 
-    _HEADER = ["キーワード", "ページ番号", "抽出内容", "PDFファイル"]
+    出力ファイルは、機械的なキーワード抽出結果に加えて空欄の
+    「Copilot意味理解結果」列を持つ。この列はCopilot in Excelを使って
+    ユーザーが手動で埋めることを想定しており、埋めた時点でそのExcelが
+    最終成果物となる(Python側での再読み込み処理は行わない)。
+    """
+
+    _HEADER = ["キーワード", "ページ番号", "抽出内容", "PDFファイル", "Copilot意味理解結果"]
 
     def export(self, result: ExtractionResult, output_path: Path) -> None:
         if output_path.suffix.lower() != ".xlsx":
@@ -82,7 +88,7 @@ class ExcelExportService:
         sheet.append(self._HEADER)
         for match in result.matches:
             sheet.append(
-                [match.keyword, match.page_number, match.context, str(result.source_path)]
+                [match.keyword, match.page_number, match.context, str(result.source_path), ""]
             )
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
