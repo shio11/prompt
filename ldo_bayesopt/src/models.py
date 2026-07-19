@@ -57,7 +57,7 @@ class OperatingPoint:
 
 @dataclass(frozen=True)
 class LdoDesignParameters:
-    """最適化対象となる外付け部品定数。"""
+    """最適化対象となる外付け部品定数（公称値、または環境摂動を適用した実効値）。"""
 
     output_capacitance_f: float
     esr_ohm: float
@@ -107,8 +107,57 @@ class LdoSearchSpace:
 
 
 @dataclass(frozen=True)
+class ToleranceSpec:
+    """車載環境でのロバスト評価に用いる部品バラツキ・温度・入力電圧の変動範囲。"""
+
+    output_capacitance_tolerance: float
+    esr_tolerance: float
+    pass_device_resistance_tolerance: float
+    compensation_capacitance_tolerance: float
+    zero_resistance_tolerance: float
+    feedback_resistance_tolerance: float
+    pass_device_resistance_temp_coeff_per_c: float
+    quiescent_current_temp_coeff_per_c: float
+    input_voltage_min_v: float
+    input_voltage_max_v: float
+    temperature_min_c: float
+    temperature_max_c: float
+
+    def __post_init__(self) -> None:
+        for name in (
+            "output_capacitance_tolerance",
+            "esr_tolerance",
+            "pass_device_resistance_tolerance",
+            "compensation_capacitance_tolerance",
+            "zero_resistance_tolerance",
+            "feedback_resistance_tolerance",
+        ):
+            value = getattr(self, name)
+            if not (0.0 <= value < 1.0):
+                raise ValueError(f"{name} must be within [0, 1)")
+        if self.input_voltage_min_v <= 0 or self.input_voltage_min_v >= self.input_voltage_max_v:
+            raise ValueError("input_voltage_min_v must be positive and less than input_voltage_max_v")
+        if self.temperature_min_c >= self.temperature_max_c:
+            raise ValueError("temperature_min_c must be less than temperature_max_c")
+
+
+@dataclass(frozen=True)
+class EnvironmentalSample:
+    """モンテカルロサンプリングされた1つの動作条件・部品バラツキの組み合わせ。"""
+
+    input_voltage_v: float
+    temperature_c: float
+    output_capacitance_multiplier: float
+    esr_multiplier: float
+    pass_device_resistance_multiplier: float
+    compensation_capacitance_multiplier: float
+    zero_resistance_multiplier: float
+    feedback_resistance_multiplier: float
+
+
+@dataclass(frozen=True)
 class EvaluationResult:
-    """1設計点の評価結果（目的関数・安定性制約）。"""
+    """1設計点・1動作条件での評価結果。"""
 
     phase_margin_deg: float
     settling_time_us: float
@@ -124,4 +173,26 @@ class EvaluationResult:
             f"Ts={self.settling_time_us:.1f}us, "
             f"Vos={self.overshoot_mv:.1f}mV, "
             f"Ploss={self.power_loss_mw:.1f}mW)"
+        )
+
+
+@dataclass(frozen=True)
+class RobustEvaluationResult:
+    """温度・入力電圧・部品バラツキのモンテカルロ集合に対するワーストケース評価結果。"""
+
+    worst_phase_margin_deg: float
+    worst_settling_time_us: float
+    worst_overshoot_mv: float
+    worst_power_loss_mw: float
+    n_samples: int
+
+    def is_robustly_stable(self, min_phase_margin_deg: float = 45.0) -> bool:
+        return self.worst_phase_margin_deg >= min_phase_margin_deg
+
+    def __repr__(self) -> str:
+        return (
+            f"RobustEvaluationResult(worst_PM={self.worst_phase_margin_deg:.1f}deg, "
+            f"worst_Ts={self.worst_settling_time_us:.1f}us, "
+            f"worst_Vos={self.worst_overshoot_mv:.1f}mV, "
+            f"worst_Ploss={self.worst_power_loss_mw:.1f}mW, N={self.n_samples})"
         )
