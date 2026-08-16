@@ -1,5 +1,12 @@
 from models import ActionStep, ActionType, ModelType, Topic, TriggerPhrase
-from services import ActionExecutor, AgentBuilder, ConversationSimulator, GenerativeResponder, TopicMatcher
+from services import (
+    ActionExecutor,
+    AgentBuilder,
+    AgentSetupWizard,
+    ConversationSimulator,
+    GenerativeResponder,
+    TopicMatcher,
+)
 
 
 def build_sample_agent():
@@ -43,8 +50,18 @@ def build_sample_agent():
     return builder.build()
 
 
+def choose_agent():
+    print("=== Copilot Studio Agent Simulator ===")
+    print("1. サンプルエージェントを使用")
+    print("2. 対話形式で新規作成")
+    choice = input("番号を選択してください（未入力で1）: ").strip()
+    if choice == "2":
+        return AgentSetupWizard().run()
+    return build_sample_agent()
+
+
 def main() -> None:
-    agent_config, topics = build_sample_agent()
+    agent_config, topics = choose_agent()
 
     topic_matcher = TopicMatcher(topics)
     action_executor = ActionExecutor()

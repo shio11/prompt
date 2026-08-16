@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from models import (
     ActionStep,
@@ -11,6 +11,7 @@ from models import (
     ModelType,
     Speaker,
     Topic,
+    TriggerPhrase,
 )
 
 
@@ -144,3 +145,124 @@ class AgentBuilder:
 
     def build(self) -> Tuple[AgentConfig, List[Topic]]:
         return self._agent_config, list(self._topics)
+
+
+class AgentSetupWizard:
+    """
+    コンソール入力を通じて対話的にエージェント設定・ナレッジソース・トピックを
+    組み立てる責務を持つクラス。実際の組み立てはAgentBuilderへ委譲する（コンポジション）。
+    """
+
+    _MODEL_CHOICES: Tuple[ModelType, ...] = (
+        ModelType.GPT_4O,
+        ModelType.GPT_4,
+        ModelType.GPT_35_TURBO,
+    )
+    _ACTION_CHOICES: Tuple[ActionType, ...] = (
+        ActionType.SEND_MESSAGE,
+        ActionType.CALL_API,
+        ActionType.SET_VARIABLE,
+        ActionType.END_CONVERSATION,
+    )
+
+    def __init__(
+        self,
+        input_fn: Callable[[str], str] = input,
+        output_fn: Callable[[str], None] = print,
+    ) -> None:
+        self._input = input_fn
+        self._output = output_fn
+
+    def run(self) -> Tuple[AgentConfig, List[Topic]]:
+        self._output("=== エージェント設定ウィザード ===")
+        builder = self._build_base_agent()
+        self._register_knowledge_sources(builder)
+        self._register_topics(builder)
+        return builder.build()
+
+    def _build_base_agent(self) -> AgentBuilder:
+        while True:
+            try:
+                name = self._input("エージェント名: ").strip()
+                description = self._input("説明（省略可）: ").strip()
+                instructions = self._input("システム指示: ").strip()
+                builder = AgentBuilder(name=name, description=description, instructions=instructions)
+                builder.with_model(self._prompt_model_type())
+                builder.with_temperature(self._prompt_temperature())
+                return builder
+            except ValueError as error:
+                self._output(f"入力エラー: {error}。もう一度入力してください。")
+
+    def _prompt_model_type(self) -> ModelType:
+        self._output("使用モデルを選択してください:")
+        for index, model_type in enumerate(self._MODEL_CHOICES, start=1):
+            self._output(f"  {index}. {model_type.value}")
+        choice = self._input("番号を入力（未入力でgpt-4o）: ").strip()
+        if not choice:
+            return ModelType.GPT_4O
+        try:
+            return self._MODEL_CHOICES[int(choice) - 1]
+        except (ValueError, IndexError):
+            self._output("不正な選択です。gpt-4oを使用します。")
+            return ModelType.GPT_4O
+
+    def _prompt_temperature(self) -> float:
+        raw = self._input("応答温度（0.0〜1.0、未入力で0.3）: ").strip()
+        if not raw:
+            return 0.3
+        try:
+            return float(raw)
+        except ValueError:
+            self._output("不正な数値です。0.3を使用します。")
+            return 0.3
+
+    def _register_knowledge_sources(self, builder: AgentBuilder) -> None:
+        self._output("--- ナレッジソース登録（未入力で終了） ---")
+        while True:
+            name = self._input("ナレッジソース名（未入力で終了）: ").strip()
+            if not name:
+                break
+            uri = self._input("  URI: ").strip()
+            try:
+                builder.with_knowledge_source(name=name, uri=uri)
+            except ValueError as error:
+                self._output(f"入力エラー: {error}")
+
+    def _register_topics(self, builder: AgentBuilder) -> None:
+        self._output("--- トピック登録（未入力で終了） ---")
+        while True:
+            name = self._input("トピック名（未入力で終了）: ").strip()
+            if not name:
+                break
+            try:
+                topic = self._build_topic(name)
+                builder.add_topic(topic)
+            except ValueError as error:
+                self._output(f"入力エラー: {error}。このトピックは登録されませんでした。")
+
+    def _build_topic(self, name: str) -> Topic:
+        phrases_raw = self._input("  トリガーフレーズ（カンマ区切りで複数指定可）: ").strip()
+        trigger_phrases = [TriggerPhrase(text.strip()) for text in phrases_raw.split(",") if text.strip()]
+        actions = self._register_actions()
+        return Topic(name=name, trigger_phrases=trigger_phrases, actions=actions)
+
+    def _register_actions(self) -> List[ActionStep]:
+        self._output("  --- アクション登録（未入力で終了、最低1件必要） ---")
+        actions: List[ActionStep] = []
+        while True:
+            for index, action_type in enumerate(self._ACTION_CHOICES, start=1):
+                self._output(f"    {index}. {action_type.name}")
+            choice = self._input("  番号（未入力で終了）: ").strip()
+            if not choice:
+                break
+            try:
+                action_type = self._ACTION_CHOICES[int(choice) - 1]
+            except (ValueError, IndexError):
+                self._output("  不正な選択です。")
+                continue
+            payload = self._input("  内容（SET_VARIABLEの場合は key=value 形式）: ").strip()
+            try:
+                actions.append(ActionStep(action_type=action_type, payload=payload))
+            except ValueError as error:
+                self._output(f"  入力エラー: {error}")
+        return actions
