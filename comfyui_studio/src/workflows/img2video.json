@@ -1,0 +1,62 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "__IMAGE_FILENAME__",
+      "upload": "image"
+    }
+  },
+  "2": {
+    "class_type": "ImageOnlyCheckpointLoader",
+    "inputs": {
+      "ckpt_name": "__CHECKPOINT_NAME__"
+    }
+  },
+  "3": {
+    "class_type": "SVD_img2vid_Conditioning",
+    "inputs": {
+      "clip_vision": ["2", 1],
+      "init_image": ["1", 0],
+      "vae": ["2", 2],
+      "width": __WIDTH__,
+      "height": __HEIGHT__,
+      "video_frames": __FRAME_COUNT__,
+      "motion_bucket_id": __MOTION_BUCKET_ID__,
+      "fps": __FPS__,
+      "augmentation_level": __AUGMENTATION_LEVEL__
+    }
+  },
+  "4": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["2", 0],
+      "positive": ["3", 0],
+      "negative": ["3", 1],
+      "latent_image": ["3", 2],
+      "seed": __SEED__,
+      "steps": __STEPS__,
+      "cfg": __CFG_SCALE__,
+      "sampler_name": "euler",
+      "scheduler": "karras",
+      "denoise": 1
+    }
+  },
+  "5": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["4", 0],
+      "vae": ["2", 2]
+    }
+  },
+  "6": {
+    "class_type": "SaveAnimatedWEBP",
+    "inputs": {
+      "images": ["5", 0],
+      "filename_prefix": "comfyui_studio_video",
+      "fps": __FPS__,
+      "lossless": false,
+      "quality": 90,
+      "method": "default"
+    }
+  }
+}

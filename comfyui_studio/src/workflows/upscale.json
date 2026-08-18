@@ -1,0 +1,29 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "__IMAGE_FILENAME__",
+      "upload": "image"
+    }
+  },
+  "2": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+      "model_name": "__UPSCALE_MODEL_NAME__"
+    }
+  },
+  "3": {
+    "class_type": "ImageUpscaleWithModel",
+    "inputs": {
+      "upscale_model": ["2", 0],
+      "image": ["1", 0]
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "comfyui_studio_upscale",
+      "images": ["3", 0]
+    }
+  }
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ComfyUI Studio</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+  <h1>ComfyUI Studio</h1>
+  <nav>
+    <button class="tab-button active" data-tab="image">画像生成</button>
+    <button class="tab-button" data-tab="video">動画生成</button>
+    <button class="tab-button" data-tab="upscale">アップスケール</button>
+    <button class="tab-button" data-tab="interpolate">フレーム補間</button>
+    <button class="tab-button" data-tab="chat">プロンプト相談</button>
+  </nav>
+</header>
+
+<main>
+  <section id="tab-image" class="tab-panel active">
+    <h2>テキスト→画像生成</h2>
+    <form id="form-image">
+      <label>ポジティブプロンプト<textarea name="positive_prompt" required></textarea></label>
+      <label>ネガティブプロンプト<textarea name="negative_prompt"></textarea></label>
+      <div class="row">
+        <label>幅<input type="number" name="width" value="512" step="8" /></label>
+        <label>高さ<input type="number" name="height" value="512" step="8" /></label>
+        <label>Steps<input type="number" name="steps" value="20" /></label>
+        <label>CFG<input type="number" name="cfg_scale" value="8" step="0.5" /></label>
+      </div>
+      <label>チェックポイント<input type="text" name="checkpoint_name" value="v1-5-pruned-emaonly.ckpt" /></label>
+      <button type="submit">生成する</button>
+    </form>
+    <div class="result" id="result-image"></div>
+  </section>
+
+  <section id="tab-video" class="tab-panel">
+    <h2>画像→動画生成 (Stable Video Diffusion)</h2>
+    <form id="form-video">
+      <label>元画像パス(サーバー上のパス)<input type="text" name="source_image_path" required /></label>
+      <div class="row">
+        <label>幅<input type="number" name="width" value="1024" step="8" /></label>
+        <label>高さ<input type="number" name="height" value="576" step="8" /></label>
+        <label>フレーム数<input type="number" name="frame_count" value="14" /></label>
+        <label>FPS<input type="number" name="fps" value="6" /></label>
+        <label>Motion Bucket<input type="number" name="motion_bucket_id" value="127" /></label>
+      </div>
+      <button type="submit">動画を生成する</button>
+    </form>
+    <div class="result" id="result-video"></div>
+  </section>
+
+  <section id="tab-upscale" class="tab-panel">
+    <h2>アップスケール</h2>
+    <form id="form-upscale">
+      <label>画像パス(サーバー上のパス)<input type="text" name="image_path" required /></label>
+      <label>モデル
+        <select name="model">
+          <option value="RealESRGAN_x4plus.pth">RealESRGAN x4plus</option>
+          <option value="RealESRGAN_x2plus.pth">RealESRGAN x2plus</option>
+          <option value="RealESRGAN_x4plus_anime_6B.pth">RealESRGAN x4plus anime</option>
+        </select>
+      </label>
+      <button type="submit">アップスケールする</button>
+    </form>
+    <div class="result" id="result-upscale"></div>
+  </section>
+
+  <section id="tab-interpolate" class="tab-panel">
+    <h2>フレーム補間 (RIFE)</h2>
+    <form id="form-interpolate">
+      <label>動画パス(サーバー上のパス)<input type="text" name="video_path" required /></label>
+      <label>倍率
+        <select name="multiplier">
+          <option value="2">2倍</option>
+          <option value="4">4倍</option>
+        </select>
+      </label>
+      <button type="submit">補間する</button>
+    </form>
+    <div class="result" id="result-interpolate"></div>
+  </section>
+
+  <section id="tab-chat" class="tab-panel">
+    <h2>プロンプト相談エージェント (Qwen3.8)</h2>
+    <p class="hint">「こんな画像を作りたいんだけど」「こういうプロンプト作ってぇ」と話しかけてください。</p>
+    <div id="chat-log"></div>
+    <form id="form-chat">
+      <input type="text" name="message" placeholder="こんな画像を作りたいんだけど…" required />
+      <button type="submit">送信</button>
+    </form>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
