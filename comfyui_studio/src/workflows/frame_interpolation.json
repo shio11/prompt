@@ -1,0 +1,42 @@
+{
+  "1": {
+    "class_type": "VHS_LoadVideo",
+    "inputs": {
+      "video": "__VIDEO_FILENAME__",
+      "force_rate": 0,
+      "force_size": "Disabled",
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 0,
+      "skip_first_frames": 0,
+      "select_every_nth": 1
+    }
+  },
+  "2": {
+    "class_type": "RIFE VFI",
+    "inputs": {
+      "frames": ["1", 0],
+      "ckpt_name": "__CKPT_NAME__",
+      "clear_cache_after_n_frames": 10,
+      "multiplier": __MULTIPLIER__,
+      "fast_mode": true,
+      "ensemble": true,
+      "scale_factor": 1.0
+    }
+  },
+  "3": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "images": ["2", 0],
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "comfyui_studio_interp",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "pingpong": false,
+      "save_output": true
+    }
+  }
+}
