@@ -1,3 +1,8 @@
+# /// script
+# dependencies = [
+#     "boxsdk>=3.9,<4",
+# ]
+# ///
 import os
 
 from models import BoxCredentials

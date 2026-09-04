@@ -9,6 +9,12 @@ Box上の資料を書き換えてしまう心配がありません。
 
 1. 依存パッケージのインストール
 
+   `uv` を使う場合は `main.py` にインラインスクリプトメタデータ（PEP 723）で
+   依存関係（`boxsdk`）を記載済みのため、`uv run main.py` を実行するだけで
+   自動的に依存パッケージがインストールされます。個別にインストールする必要はありません。
+
+   `pip` を使う場合は以下を実行してください。
+
    ```bash
    cd box_viewer/src
    pip install -r requirements.txt
@@ -26,12 +32,25 @@ Box上の資料を書き換えてしまう心配がありません。
    export BOX_ROOT_FOLDER_ID="0"  # 起点にしたいフォルダID（省略時はルートフォルダ）
    ```
 
+   Windowsのコマンドプロンプトの場合は `set`、PowerShellの場合は `$env:` を使用してください。
+
 ## 実行方法
 
 ```bash
 cd box_viewer/src
-python3 main.py
+uv run main.py
 ```
+
+`uv` がない場合は事前準備1で `pip install -r requirements.txt` を実行したうえで
+`python3 main.py`（Windowsは `python main.py`）を実行してください。
+
+### GUIが起動しない場合
+
+`tkinter` はPython標準ライブラリの一部で、python.orgの通常のWindows/macOSインストーラでは
+標準搭載されています。`ModuleNotFoundError: No module named 'tkinter'` が出る場合は、
+tkinterを含まない特殊なPythonディストリビューション（一部のLinuxディストリビューションや、
+最小構成のPythonビルド）を使用している可能性があるため、OS標準のPythonを使用するか、
+`tkinter` を別途インストールしてください（例: Debian/Ubuntuなら `sudo apt install python3-tk`）。
 
 ## 使い方
 
