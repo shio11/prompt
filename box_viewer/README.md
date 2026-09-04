@@ -73,5 +73,22 @@ tkinterを含まない特殊なPythonディストリビューション（一部�
   アップロード・更新・削除などの書き込み系APIは呼び出さない設計にすることで、
   「読み取り専用」であることをクラスの責務レベルで保証しています。
 - プレビューはローカルにファイルをダウンロードせず、Boxの埋め込みプレビュー
-  （`get_embed_url()` で取得するBox Embed URL）をブラウザで開く方式のため、
-  ローカルへの誤った複製や編集後の再アップロードが発生しません。
+  （`get_file_by_id(file_id, fields=["expiring_embed_link"])` で取得する
+  Box Embed URL）をブラウザで開く方式のため、ローカルへの誤った複製や
+  編集後の再アップロードが発生しません。
+
+## 使用しているBox SDKについて
+
+Box Python SDKは2025年にバージョン体系が再編され、旧来の`boxsdk`（`Client`/
+`OAuth2`等のAPI）はv3以前でEOL（サポート終了）となっています。本ツールは
+現行の最新メジャーバージョンである **boxsdk v10**（内部モジュール名は
+`box_sdk_gen`、`BoxClient`/`BoxDeveloperTokenAuth`を使う新API）を採用しています。
+
+- フォルダ一覧: `client.folders.get_folder_items(folder_id).entries`
+- 読み取り専用プレビューURL: `client.files.get_file_by_id(file_id, fields=["expiring_embed_link"]).expiring_embed_link.url`
+
+これらはpip経由でboxsdk v10を実際にインストールし、上記メソッドのシグネチャと
+戻り値のスキーマ（`FolderMini`/`FileMini`/`FileFull`等）をこのセッション内で
+直接確認したうえで実装しています。ただし実際のBoxアカウント・Developer Tokenに
+対する疎通確認までは行えていないため、初回実行時にAPIエラーが出た場合は
+エラーメッセージの内容を確認のうえご連絡ください。

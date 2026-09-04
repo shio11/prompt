@@ -1,6 +1,6 @@
 # /// script
 # dependencies = [
-#     "boxsdk>=3.9,<4",
+#     "boxsdk>=10,<11",
 # ]
 # ///
 import os

@@ -5,7 +5,7 @@ import webbrowser
 from tkinter import messagebox, ttk
 from typing import Dict, List, Optional
 
-from boxsdk import Client, OAuth2
+from box_sdk_gen import BoxClient, BoxDeveloperTokenAuth
 
 from models import BoxCredentials, BoxItem, ItemType
 
@@ -15,21 +15,17 @@ class BoxAuthenticator:
 
     def __init__(self, credentials: BoxCredentials) -> None:
         self._credentials = credentials
-        self._client: Optional[Client] = None
+        self._client: Optional[BoxClient] = None
 
     @property
-    def client(self) -> Client:
+    def client(self) -> BoxClient:
         if self._client is None:
             self._client = self._build_client()
         return self._client
 
-    def _build_client(self) -> Client:
-        oauth = OAuth2(
-            client_id="",
-            client_secret="",
-            access_token=self._credentials.developer_token,
-        )
-        return Client(oauth)
+    def _build_client(self) -> BoxClient:
+        auth = BoxDeveloperTokenAuth(token=self._credentials.developer_token)
+        return BoxClient(auth=auth)
 
 
 class BoxRepository:
@@ -39,19 +35,28 @@ class BoxRepository:
     アップロード・更新・削除等の書き込み系操作は一切扱わない。
     """
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: BoxClient) -> None:
         self._client = client
 
     def list_folder_items(self, folder_id: str) -> List[BoxItem]:
-        folder = self._client.folder(folder_id=folder_id)
         items: List[BoxItem] = []
-        for entry in folder.get_items():
-            item_type = ItemType.FOLDER if entry.type == "folder" else ItemType.FILE
+        entries = self._client.folders.get_folder_items(folder_id).entries or []
+        for entry in entries:
+            if entry.type.value == "folder":
+                item_type = ItemType.FOLDER
+            elif entry.type.value == "file":
+                item_type = ItemType.FILE
+            else:
+                continue
             items.append(BoxItem(item_id=entry.id, name=entry.name, item_type=item_type))
         return items
 
     def get_preview_url(self, file_id: str) -> str:
-        return self._client.file(file_id=file_id).get_embed_url()
+        file_full = self._client.files.get_file_by_id(file_id, fields=["expiring_embed_link"])
+        embed_link = file_full.expiring_embed_link
+        if embed_link is None or embed_link.url is None:
+            raise ValueError("このファイルは読み取り専用プレビューに対応していません")
+        return embed_link.url
 
 
 class ReadOnlyFileOpener:
